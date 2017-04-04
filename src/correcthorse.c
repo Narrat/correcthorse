@@ -12,9 +12,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <time.h>
 #include <string.h>
 #include <ctype.h>
+#include <sys/random.h>
 
 #ifdef _GNU_SOURCE
 #include <getopt.h>
@@ -30,15 +30,16 @@ static void print_version(char *argv0);
 
 static size_t rand_index(size_t n)
 {
-    static int seed = 0;
+    unsigned long seed_feed[1];
+    int ret=0;
 
-    if (!seed)
-    {
-        srand(time(NULL));
-        seed = 1;
+    ret = getrandom(seed_feed, sizeof(long), 0);
+    if (ret <= 0) {
+        fprintf(stderr, "getrandom() returned %d: ", ret);
+        perror("");
     }
 
-    return rand() % n;
+    return *seed_feed % n;
 }
 
 static void rand_perm(size_t *dest, size_t n)
