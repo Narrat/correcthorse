@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdint.h>
 #include <sys/random.h>
 
 #ifdef _GNU_SOURCE
@@ -30,16 +31,25 @@ static void print_version(char *argv0);
 
 static size_t rand_index(size_t n)
 {
-    unsigned long seed_feed[1];
-    int ret=0;
+    size_t random_number = 0;
+    size_t max = SIZE_MAX - (SIZE_MAX % n);
+    ssize_t written = 0;
 
-    ret = getrandom(seed_feed, sizeof(long), 0);
-    if (ret <= 0) {
-        fprintf(stderr, "getrandom() returned %d: ", ret);
-        perror("");
-    }
+    /* discard values that are in the last section of the
+     * range of SIZE_MAX that would be cut off by the modulo
+     * operator. This way we get a uniformly distributed random
+     * number without small bias. */
+    do
+    {
+        written = getrandom(&random_number, sizeof(size_t), 0);
+        if (written != sizeof(size_t))
+        {
+            fprintf(stderr, "getrandom() returned %d: ", (int)written);
+            perror("");
+        }
+    } while (random_number > max);
 
-    return *seed_feed % n;
+    return random_number % n;
 }
 
 static void rand_perm(size_t *dest, size_t n)
