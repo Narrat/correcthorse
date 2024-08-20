@@ -11,6 +11,7 @@ as published by Sam Hocevar. See the COPYING file for more details.
 
 import os.path
 import random
+import secrets
 
 CHARS_MIN_DEFAULT = 12
 WORDS_MIN_DEFAULT = 4
@@ -65,7 +66,7 @@ def make_passphrases(
         c = chars
 
         while len(w) < words_min or c < chars_min:
-            word = random.choice(wlistwords)
+            word = secrets.choice(wlistwords)
             w.append(word)
             c += len(word)
 
