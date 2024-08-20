@@ -11,15 +11,16 @@ package main
 
 import (
 	"bufio"
+	"crypto/rand"
 	"flag"
 	"fmt"
 	"io"
-	"math/rand"
+	"math/big"
+	mrand "math/rand"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 )
 
 const (
@@ -125,7 +126,7 @@ func loadWords(paths []string) ([][]string, error) {
 // shuffle a string slice
 func shuffleStrings(words []string) []string {
 	nWords := len(words)
-	indices := rand.Perm(len(words))
+	indices := mrand.Perm(len(words))
 	w := make([]string, nWords)
 	for i, j := range indices {
 		w[i] = words[j]
@@ -137,6 +138,7 @@ func shuffleStrings(words []string) []string {
 func makePassphrase(wordLists [][]string) string {
 	nChars := 0
 	words := make([]string, 0)
+	wordListsInt := big.NewInt(int64(len(wordLists)))
 
 	// add user-specified words
 	for _, word := range optIncs.vals {
@@ -146,8 +148,11 @@ func makePassphrase(wordLists [][]string) string {
 
 	// add random word from random list until enough words and total characters
 	for len(words) < optWords || nChars < optChars {
-		list := wordLists[rand.Intn(len(wordLists))]
-		word := list[rand.Intn(len(list))]
+		wordListsRand, _ := rand.Int(rand.Reader, wordListsInt)
+		list := wordLists[wordListsRand.Uint64()]
+		listInt := big.NewInt(int64(len(list)))
+		listRand, _ := rand.Int(rand.Reader, listInt)
+		word := list[listRand.Uint64()]
 		nChars += len(word)
 		words = append(words, word)
 	}
@@ -173,7 +178,6 @@ func init() {
 }
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
 	flag.Parse()
 
 	// last non-option argument is the number of passphrases to generate
